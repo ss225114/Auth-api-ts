@@ -38,11 +38,13 @@ export const login = async (req: Request, res: Response) => {
     .where(eq(usersTable.username, username))
     .then((u) => u[0]);
   if (!user || !(await bcrypt.compare(password, user.password))) {
-    return res.status(401).json({ message: "Invalid credentials" });
+    res.status(401).json({ message: "Invalid credentials" });
+    return;
   }
   const accessToken = generateAccessToken(user.id);
   const refreshToken = generateRefreshToken(user.id);
   res.json({ user, accessToken, refreshToken });
+  return;
 };
 
 export const verifyEmail = async (req: Request, res: Response) => {
@@ -59,9 +61,11 @@ export const verifyEmail = async (req: Request, res: Response) => {
       .update(usersTable)
       .set({ isActive: true, otp: null, otpGeneratedTime: null })
       .where(eq(usersTable.id, user.id));
-    return res.status(200).json({ message: "User registration Successful" });
+    res.status(200).json({ message: "User registration Successful" });
+    return;
   } else {
     // console.log((Date.now() - user.otpGeneratedTime?user.otpGeneratedTime.getTime():0) / 1000 < 60);
-    return res.status(500).json({ message: "Invalid otp" });
+    res.status(500).json({ message: "Invalid otp" });
+    return;
   }
 };

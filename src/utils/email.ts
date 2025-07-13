@@ -3,7 +3,7 @@ import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
 
-export const otpMail = async(email, otp) => {
+export const otpMail = async(email: string, otp: string) => {
        try {
         const transporter = nodemailer.createTransport({
           host: "smtp.gmail.com",
