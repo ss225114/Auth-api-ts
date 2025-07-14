@@ -103,7 +103,7 @@ describe("login", () => {
       refreshToken: "refresh_token",
     });
   });
-  it("checks for invalid credentials", async ()=>{
+  it("should checks for invalid credentials and return 401", async ()=>{
     const mockReq = {
       body: {
         username: "testuser",
@@ -138,6 +138,47 @@ describe("login", () => {
     mockDb.then.mockImplementation((cb) => cb([mockUser]));
 
     (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+    await login(mockReq as any, mockRes as any);
+
+    expect(mockRes.status).toHaveBeenCalledWith(401);   
+    expect(mockRes.json).toHaveBeenCalledWith({
+      message:"Invalid credentials"
+    });
+  });
+  it("should checks for user not found and return 401", async ()=>{
+    const mockReq = {
+      body: {
+        username: "testuser2",
+        password: "password123",
+      },
+    };
+
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+
+    const mockUser = {
+      id: 1,
+      username: "testuser",
+      password: "hashed_password",
+    };
+
+    const mockDb = db as unknown as {
+      select: jest.Mock;
+      from: jest.Mock;
+      where: jest.Mock;
+      then: jest.Mock;
+      insert: jest.Mock;
+      values: jest.Mock;
+      update: jest.Mock;
+      set: jest.Mock;
+    };
+    mockDb.select.mockReturnValue(mockDb);
+    mockDb.from.mockReturnValue(mockDb);
+    mockDb.where.mockReturnValue(mockDb);
+    mockDb.then.mockImplementation((cb) => cb([mockUser]));
+
     await login(mockReq as any, mockRes as any);
 
     expect(mockRes.status).toHaveBeenCalledWith(401);   
