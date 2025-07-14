@@ -43,7 +43,7 @@ export const login = async (req: Request, res: Response) => {
   }
   const accessToken = generateAccessToken(user.id);
   const refreshToken = generateRefreshToken(user.id);
-  res.json({ user, accessToken, refreshToken });
+  res.status(200).json({ user, accessToken, refreshToken });
   return;
 };
 

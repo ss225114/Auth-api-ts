@@ -95,11 +95,186 @@ describe("login", () => {
 
     await login(mockReq as any, mockRes as any);
 
-    expect(mockDb.select).toHaveBeenCalled();    
+    expect(mockDb.select).toHaveBeenCalled(); 
+    expect(mockRes.status).toHaveBeenCalledWith(200);   
     expect(mockRes.json).toHaveBeenCalledWith({
       user: mockUser,
       accessToken: "access_token",
       refreshToken: "refresh_token",
+    });
+  });
+  it("checks for invalid credentials", async ()=>{
+    const mockReq = {
+      body: {
+        username: "testuser",
+        password: "invalid_password123",
+      },
+    };
+
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+
+    const mockUser = {
+      id: 1,
+      username: "testuser",
+      password: "hashed_password",
+    };
+
+    const mockDb = db as unknown as {
+      select: jest.Mock;
+      from: jest.Mock;
+      where: jest.Mock;
+      then: jest.Mock;
+      insert: jest.Mock;
+      values: jest.Mock;
+      update: jest.Mock;
+      set: jest.Mock;
+    };
+    mockDb.select.mockReturnValue(mockDb);
+    mockDb.from.mockReturnValue(mockDb);
+    mockDb.where.mockReturnValue(mockDb);
+    mockDb.then.mockImplementation((cb) => cb([mockUser]));
+
+    (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+    await login(mockReq as any, mockRes as any);
+
+    expect(mockRes.status).toHaveBeenCalledWith(401);   
+    expect(mockRes.json).toHaveBeenCalledWith({
+      message:"Invalid credentials"
+    });
+  });
+});
+
+describe("verifyEmail", () => {
+  it("should activate user if otp is valid and not expired", async () => {
+    const now = new Date();
+    const mockUser = {
+      id: 1,
+      email: "test@example.com",
+      otp: "123456",
+      otpGeneratedTime: new Date(now.getTime() - 60 * 1000),
+    };
+
+    const mockReq = {
+      body: {
+        email: "test@example.com",
+        otpInp: "123456",
+      },
+    };
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+
+    const mockDb = db as unknown as {
+      select: jest.Mock;
+      from: jest.Mock;
+      where: jest.Mock;
+      then: jest.Mock;
+      insert: jest.Mock;
+      values: jest.Mock;
+      update: jest.Mock;
+      set: jest.Mock;
+    };
+
+    (mockDb.select as jest.Mock).mockReturnValue(mockDb);
+    (mockDb.from as jest.Mock).mockReturnValue(mockDb);
+    (mockDb.where as jest.Mock).mockReturnValue(mockDb);
+    (mockDb.then as jest.Mock).mockImplementation((cb) => cb([mockUser]));
+
+    await verifyEmail(mockReq as any, mockRes as any);
+    // expect(mockDb.)
+    expect(mockDb.update).toHaveBeenCalledWith(usersTable);
+    expect(mockRes.status).toHaveBeenCalledWith(200);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      message: "User registration Successful",
+    });
+  });
+
+  it("should return 500 if otp is expired", async () => {
+    const time = new Date(Date.now() - 5 * 60 * 1000);
+    const mockUser = {
+      id: 1,
+      email: "test@example.com",
+      otp: "123456",
+      otpGeneratedTime: time,
+    };
+
+    const mockReq = {
+      body: {
+        email: "test@example.com",
+        otpInp: "123456",
+      },
+    };
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const mockDb = db as unknown as {
+      select: jest.Mock;
+      from: jest.Mock;
+      where: jest.Mock;
+      then: jest.Mock;
+      insert: jest.Mock;
+      values: jest.Mock;
+      update: jest.Mock;
+      set: jest.Mock;
+    };
+
+    (mockDb.select as jest.Mock).mockReturnValue(mockDb);
+    (mockDb.from as jest.Mock).mockReturnValue(mockDb);
+    (mockDb.where as jest.Mock).mockReturnValue(mockDb);
+    (mockDb.then as jest.Mock).mockImplementation((cb) => cb([mockUser]));
+
+    await verifyEmail(mockReq as any, mockRes as any);
+
+    expect(mockRes.status).toHaveBeenCalledWith(500);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      message: "Invalid otp",
+    });
+  });
+  it("should return 500 if otp is invalid", async () => {
+    const time = new Date();
+    const mockUser = {
+      id: 1,
+      email: "test@example.com",
+      otp: "123456",
+      otpGeneratedTime: time,
+    };
+
+    const mockReq = {
+      body: {
+        email: "test@example.com",
+        otpInp: "000000",
+      },
+    };
+    const mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const mockDb = db as unknown as {
+      select: jest.Mock;
+      from: jest.Mock;
+      where: jest.Mock;
+      then: jest.Mock;
+      insert: jest.Mock;
+      values: jest.Mock;
+      update: jest.Mock;
+      set: jest.Mock;
+    };
+
+    (mockDb.select as jest.Mock).mockReturnValue(mockDb);
+    (mockDb.from as jest.Mock).mockReturnValue(mockDb);
+    (mockDb.where as jest.Mock).mockReturnValue(mockDb);
+    (mockDb.then as jest.Mock).mockImplementation((cb) => cb([mockUser]));
+
+    await verifyEmail(mockReq as any, mockRes as any);
+
+    expect(mockRes.status).toHaveBeenCalledWith(500);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      message: "Invalid otp",
     });
   });
 });
